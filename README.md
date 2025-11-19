@@ -1,6 +1,6 @@
 # stars
 
-Image typing: stars in your terminal and getting your history of commands connected like this:
+Type "stars" in your terminal and get your history of commands connected like this:
 
 ![Constellations](https://www.profounddecisions.co.uk/mediawiki-public/images/a/a8/RelativePositionslores.JPG)
 
