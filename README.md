@@ -40,7 +40,7 @@ Nudge labels down if collision detected.
 - Vertical gap between rows: 4–6 lines.
 
 ### Example Galaxy 1.0:
-
+``` bash
                              * <ls -la>                          *--------<ping 255.2...>
                           /                                     /
             * <ls -l>   /                 <ping 255.2...>-----*
@@ -65,7 +65,7 @@ Nudge labels down if collision detected.
 <echo>---* <echo hi>------* <echo bye>                <pwd>----* <pwd>
            \                                             \
             * <echo $VAR>                                 * <pwd -L>
-
+```
 
 ### Canvas:
 - Represented as std::vector<std::string> rows.
