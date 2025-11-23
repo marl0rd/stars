@@ -50,12 +50,12 @@ Nudge labels down if collision detected.
            \             /
             * <ls -al>           * <cd /hom>
                                 /
-                      <cd>----* <cd ..>
-                                \
-                                 * <cd -P>
+                      <cd>----* <cd ..>                              <nano>
+                                \                                       |
+                                 * <cd -P>                              |
+                                                                        *<nano ~.config>
 
-
-<rm>----* <rm *>------* <rm -r>------* <rm -r .>       * <git stat>
+<rm>----* <rm *>------* <rm -r>------* <rm -r .>         * <git stat>
           \                                             /
            * <rm file>                      <git>----* <git log>
                                                       \
