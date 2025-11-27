@@ -116,3 +116,8 @@ Place constellations in rows until width exhausted, then wrap.
     - ascii_canvas (buffer ops)
     - constellation_planner (branch logic)
     - renderer_ascii (final print)
+
+## Development dependencies
+- cmake
+- gdb
+- gcc
