@@ -10,16 +10,18 @@ namespace Stars {
 class HistoryEntry {
    public:
     std::string raw;
-    std::optional<long long> timestamp;  ///< Bash usually lacks timestamps; keep for future.
+    std::optional<long long> timestamp;
 };
 
 /// @brief Reads bash history files and returns entries.
 class HistoryReader {
    public:
+    const unsigned int LIMIT = 5000;
+
     HistoryReader() = default;
 
-    /// @brief Auto-detects the default bash history path. @return Full path to ~/.bash_history
-    std::string autoDetectBashHistory();
+    /// @brief Gets the default bash history file path (~/.bash_history).
+    std::string getBashHistoryPath();
 
     /// @brief Reads a history file into entries. @return A list of HistoryEntry lines.
     std::vector<HistoryEntry> readFile(const std::string& path);

@@ -43,7 +43,7 @@ int main(int argc, char** argv) {
   try {
     Stars::HistoryReader reader;
     if (histfile.empty()) {
-      histfile = reader.autoDetectBashHistory();
+      histfile = reader.getBashHistoryPath();
     }
 
     auto entries = reader.readFile(histfile);

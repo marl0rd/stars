@@ -5,7 +5,7 @@
 #include <filesystem>
 
 TEST(HistoryReader, ReadsSampleFile) {
-  const std::string path = std::string("resources/sample_hist_bash.txt");
+  const std::string path = std::string("../resources/.bash_history");
   ASSERT_TRUE(std::filesystem::exists(path));
 
   Stars::HistoryReader reader;

@@ -1,7 +1,7 @@
-file(GLOB STAR_SRC
-  main.cpp
-  HistoryReader.cpp
-)
+# SDK
+add_library(stars_lib HistoryReader.cpp)
+target_include_directories(stars_lib PUBLIC ${CMAKE_SOURCE_DIR}/src)
 
-add_executable(stars ${STAR_SRC})
-target_include_directories(stars PRIVATE ${CMAKE_SOURCE_DIR}/include)
+# Executable
+add_executable(stars main.cpp)
+target_link_libraries(stars PRIVATE stars_lib)
