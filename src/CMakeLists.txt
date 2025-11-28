@@ -1,5 +1,6 @@
 file(GLOB STAR_SRC
   main.cpp
+  HistoryReader.cpp
 )
 
 add_executable(stars ${STAR_SRC})

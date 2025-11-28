@@ -98,13 +98,12 @@ Place constellations in rows until width exhausted, then wrap.
 - GoogleTest for unit tests.
 
 ## Recommended style
-- FileNaming: HistoryReader.hpp
 - Header guards: use pragma once
 - Namespaces: Stars
 - Indentation: 2 spaces
-- Variable, constants, classes, etc naming:  Java style
+- Naming style for Files, Variables, constants, classes, etc:  Java style
 - Pointers: smart pointers
-- Comments: doxygen style
+- Comments: concise doxygen style with ///
 - error handling: exceptions
 
 ## Milestones
