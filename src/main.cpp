@@ -1,4 +1,3 @@
-
 #include <boost/program_options.hpp>
 #include <iostream>
 #include <string>
@@ -6,24 +5,12 @@
 
 #include "HistoryReader.hpp"
 
-namespace Stars {
-static constexpr const char* VERSION = "0.2.0";
-void printHelp() {
-    std::cout << "stars - ASCII constellations from your bash history\n\n";
-    std::cout << "Usage:\n";
-    std::cout << "  stars [--histfile <path>] [--help] [--version]\n\n";
-    std::cout << "Options:\n";
-    std::cout << "  --list       Print the whole history\n";
-    std::cout << "  --help       Show this help and exit\n";
-    std::cout << "  --version    Show version and exit\n";
-    std::cout << "  --histfile   Specify a bash history file path (default: ~/.bash_history)\n\n";
-}
-}  // namespace Stars
+static constexpr const char* STARS_VERSION = "0.2.0";
 
 int main(int argc, char** argv) {
     namespace po = boost::program_options;
 
-    po::options_description desc("Allowed options");
+    po::options_description desc("Stars Options:");
     desc.add_options()("list", "Print the whole history")("help", "Show help message")("version", "Show version");
 
     po::variables_map vm;
@@ -37,12 +24,12 @@ int main(int argc, char** argv) {
     }
 
     if (vm.count("help")) {
-        Stars::printHelp();
+        std::cout << desc << "\n";
         return 0;
     }
 
     if (vm.count("version")) {
-        std::cout << "stars " << Stars::VERSION << "\n";
+        std::cout << "stars " << STARS_VERSION << "\n";
         return 0;
     }
 
