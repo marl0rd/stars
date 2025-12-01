@@ -1,21 +1,29 @@
 cmake_minimum_required(VERSION 3.22)
 project(stars LANGUAGES CXX)
 
+# ---- Compiler ----
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
-
 add_compile_options(-Wall -Wextra -Wpedantic)
 
-# FetchContent for GoogleTest (tests only)
-include(FetchContent)
-FetchContent_Declare(
-  googletest
-  URL https://github.com/google/googletest/archive/refs/heads/main.zip
-)
-set(BUILD_GMOCK OFF CACHE BOOL "" FORCE)
-set(INSTALL_GTEST OFF CACHE BOOL "" FORCE)
-FetchContent_MakeAvailable(googletest)
+# Dependencies
+find_package(Boost REQUIRED COMPONENTS program_options)
+find_package(GTest REQUIRED)
 
-add_subdirectory(src)
-add_subdirectory(test)
+# Resources
+file(COPY ${CMAKE_SOURCE_DIR}/resources DESTINATION ${CMAKE_BINARY_DIR})
+
+# SDK
+add_library(stars_lib src/HistoryReader.cpp)
+target_include_directories(stars_lib PUBLIC include)
+
+# Executable
+add_executable(stars src/main.cpp)
+target_link_libraries(stars PRIVATE stars_lib Boost::program_options)
+
+# Tests
+add_executable(stars_tests test/HistoryReaderTest.cpp)
+target_link_libraries(stars_tests PRIVATE stars_lib GTest::gtest_main)
+include(GoogleTest)
+gtest_discover_tests(stars_tests)

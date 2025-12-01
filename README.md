@@ -116,7 +116,10 @@ Place constellations in rows until width exhausted, then wrap.
     - constellation_planner (branch logic)
     - renderer_ascii (final print)
 
-## Development dependencies
-- cmake
-- gdb
-- gcc
+## Development instructions
+1. Install cmake, gdb, gcc, conan
+2. Clone the repo and cd to it
+3. conan install . --output-folder=build --build=missing
+4. cmake --build build/build/Release
+5. cd build/build/Release
+6. ./stars --help
