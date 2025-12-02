@@ -15,7 +15,11 @@ find_package(GTest REQUIRED)
 file(COPY ${CMAKE_SOURCE_DIR}/resources DESTINATION ${CMAKE_BINARY_DIR})
 
 # SDK
-add_library(stars_lib src/HistoryReader.cpp)
+add_library(stars_lib 
+    src/HistoryReader.cpp 
+    src/CommandIndex.cpp 
+    src/CommandTokenizer.cpp
+)
 target_include_directories(stars_lib PUBLIC include)
 
 # Executable

@@ -99,7 +99,7 @@ Place constellations in rows until width exhausted, then wrap.
 
 ## Recommended style
 - Header guards: use pragma once
-- Namespaces: Stars
+- Namespaces: stars
 - Indentation: 2 spaces
 - Naming style for Files, Variables, constants, classes, etc:  Java style
 - Pointers: smart pointers

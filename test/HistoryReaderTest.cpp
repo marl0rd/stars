@@ -8,7 +8,7 @@ TEST(HistoryReader, ReadsSampleFile) {
   const std::string path = std::string("resources/.bash_history");
   ASSERT_TRUE(std::filesystem::exists(path));
 
-  Stars::HistoryReader reader;
+  stars::HistoryReader reader;
   auto entries = reader.readFile(path);
 
   ASSERT_EQ(entries.size(), 26);

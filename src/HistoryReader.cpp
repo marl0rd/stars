@@ -4,7 +4,7 @@
 #include <fstream>
 #include <stdexcept>
 
-namespace Stars {
+namespace stars {
 
 std::string HistoryReader::getBashHistoryPath() {
   const char* home = std::getenv("HOME");
@@ -33,4 +33,4 @@ std::vector<HistoryEntry> HistoryReader::readFile(const std::string& path) {
   return entries;
 }
 
-}  // namespace Stars
+}  // namespace stars

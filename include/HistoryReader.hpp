@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-namespace Stars {
+namespace stars {
 
 /// @brief Represents a single bash history line.
 class HistoryEntry {
@@ -27,4 +27,4 @@ class HistoryReader {
     std::vector<HistoryEntry> readFile(const std::string& path);
 };
 
-}  // namespace Stars
+}  // namespace stars
