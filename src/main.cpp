@@ -4,7 +4,7 @@
 #include <vector>
 
 #include "HistoryReader.hpp"
-#unclude "CommandIndex.hpp"
+#include "CommandIndex.hpp"
 
 static constexpr const char* STARS_VERSION = "0.2.0";
 

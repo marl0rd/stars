@@ -5,7 +5,7 @@
 namespace stars {
 
 void CommandIndex::addCommand(const std::string& line) {
-  auto tokens = CommandTokenizer::tokenize(line);
+  auto tokens = CommandTokenizer::getTokens(line);
   if (tokens.empty()) return;
 
   std::string base = tokens[0];

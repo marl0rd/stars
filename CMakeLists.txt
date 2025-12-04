@@ -21,6 +21,7 @@ add_library(stars_lib
     src/CommandTokenizer.cpp
 )
 target_include_directories(stars_lib PUBLIC include)
+target_link_libraries(stars_lib PUBLIC Boost::headers)
 
 # Executable
 add_executable(stars src/main.cpp)
