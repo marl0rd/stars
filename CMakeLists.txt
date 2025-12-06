@@ -16,9 +16,16 @@ file(COPY ${CMAKE_SOURCE_DIR}/resources DESTINATION ${CMAKE_BINARY_DIR})
 
 # SDK
 add_library(stars_lib 
-    src/HistoryReader.cpp 
+    src/graphics/Canvas.cpp
+    src/graphics/DiagonalWire.cpp
+    src/graphics/HorizontalWire.cpp
+    src/graphics/Renderer.cpp
+    src/graphics/Star.cpp
+    src/graphics/Wire.cpp
     src/CommandIndex.cpp 
     src/CommandTokenizer.cpp
+    src/ConstellationPlanner.cpp
+    src/HistoryReader.cpp 
 )
 target_include_directories(stars_lib PUBLIC include)
 target_link_libraries(stars_lib PUBLIC Boost::headers)
