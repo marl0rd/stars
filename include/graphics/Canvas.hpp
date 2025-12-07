@@ -5,23 +5,22 @@
 namespace stars {
 
 class Canvas {
-public:
-  Canvas(int w, int h, char blank = ' ');
-  int width() const;
-  int height() const;
+   public:
+    Canvas(int w, int h);
+    int width() const;
+    int height() const;
 
-  bool inBounds(int x, int y) const;
-  bool put(int x, int y, char c);
+    bool isInBounds(int x, int y) const;
+    void putChar(int x, int y, char c);
+    void putString(int x, int y, const std::string& s, bool shiftDown = true, int maxShifts = 2);
 
-  bool putString(int x, int y, const std::string& s, bool nudgeDown = true, int maxNudges = 2);
+    std::string getRender() const;
 
-  std::string render() const;
-
-private:
-  int w_;
-  int h_;
-  char blank_;
-  std::vector<std::string> buf_;
+   private:
+    int w_;
+    int h_;
+    static constexpr char BLANK_CHAR = ' ';
+    std::vector<std::string> buffer_;
 };
 
-} // namespace stars
+}  // namespace stars

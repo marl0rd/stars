@@ -2,4 +2,4 @@
 
 namespace stars {
 Wire::~Wire() = default;
-} // namespace stars
+}  // namespace stars

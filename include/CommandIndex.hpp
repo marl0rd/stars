@@ -23,7 +23,7 @@ class CommandIndex {
     /// @brief TODO
     void printSummary() const;
 
-    const std::unordered_map<std::string, std::vector<CommandVariant>>& map() const { return index_; }
+    const std::unordered_map<std::string, std::vector<CommandVariant>>& getIndexMap() const { return index_; }
     bool hasBase(const std::string& base) const { return index_.find(base) != index_.end(); }
     const std::vector<CommandVariant>& variantsOf(const std::string& base) const { return index_.at(base); }
 

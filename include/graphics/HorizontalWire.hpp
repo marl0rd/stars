@@ -7,7 +7,7 @@ namespace stars {
 class HorizontalWire : public Wire {
 public:
   HorizontalWire(int x1, int x2, int y);
-  bool draw(Canvas& canvas) const override;
+  void draw(Canvas& canvas) const override;
 
 private:
   int x1_, x2_, y_;

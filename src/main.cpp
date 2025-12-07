@@ -2,9 +2,9 @@
 #include <iostream>
 
 #include "CommandIndex.hpp"
+#include "ConstellationPlanner.hpp"
 #include "HistoryReader.hpp"
 #include "graphics/Renderer.hpp"
-#include "ConstellationPlanner.hpp"
 
 static constexpr const char* STARS_VERSION = "0.2.0";
 
@@ -48,15 +48,12 @@ int main(int argc, char** argv) {
 
         if (!vm.count("constellation")) {
             // Default: render the most active base command (by total frequency)
-            const auto& cmap = index.map();
-            if (cmap.empty()) {
-                std::cerr << "No commands in history.\n";
-                return 1;
-            }
+            const auto& indexMap = index.getIndexMap();
+            
             // Pick base with highest cumulative variant frequency
-            const auto* bestIt = &(*cmap.begin());
+            const auto* bestIt = &(*indexMap.begin());
             int bestSum = 0;
-            for (const auto& kv : cmap) {
+            for (const auto& kv : indexMap) {
                 int sum = 0;
                 for (const auto& v : kv.second) sum += v.frequency;
                 if (sum > bestSum) {
@@ -71,8 +68,7 @@ int main(int argc, char** argv) {
             auto plan = stars::planOne(base, variants, pp);
 
             stars::RenderParams rp;  // uses default canvas and center
-            std::cout << stars::Renderer::renderConstellation(
-                plan.baseLabel, plan.centerLabel, plan.upRays, plan.downRays, rp);
+            std::cout << stars::Renderer::getRenderedConstellation(plan.baseLabel, plan.centerLabel, plan.upRays, plan.downRays, rp);
             return 0;
         } else {
             const std::string base = vm["constellation"].as<std::string>();
@@ -86,8 +82,7 @@ int main(int argc, char** argv) {
             auto plan = stars::planOne(base, variants, pp);
 
             stars::RenderParams rp;  // default canvas & center
-            std::cout << stars::Renderer::renderConstellation(
-                plan.baseLabel, plan.centerLabel, plan.upRays, plan.downRays, rp);
+            std::cout << stars::Renderer::getRenderedConstellation(plan.baseLabel, plan.centerLabel, plan.upRays, plan.downRays, rp);
             return 0;
         }
     } catch (const std::exception& ex) {
