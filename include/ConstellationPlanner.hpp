@@ -20,8 +20,8 @@ struct PlanParams {
 struct ConstellationPlan {
     std::string baseLabel;      // Like: "<ls>"
     std::string centerLabel;    // chosen most frequent variant e.g., "<ls -a>"
-    std::vector<Ray> upRays;    // Slash
-    std::vector<Ray> downRays;  // Backslash
+    std::vector<Renderer::Ray> upRays;    // Slash
+    std::vector<Renderer::Ray> downRays;  // Backslash
 };
 
 /// Build a plan for one base using exact variants (no normalization).

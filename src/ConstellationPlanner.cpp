@@ -57,7 +57,7 @@ ConstellationPlan stars::planOne(const std::string& base,
 
     bool toUp = true;
     for (const auto& it : items) {
-        Ray r{it.label, it.len};
+        Renderer::Ray r{it.label, it.len};
         if (toUp)
             out.upRays.push_back(r);
         else

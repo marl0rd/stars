@@ -1,26 +1,79 @@
 #include "graphics/Renderer.hpp"
 
+#include <algorithm>
 #include <iostream>
 
 using namespace stars;
 
-int Renderer::rightEdgeX(const Star& s, int sx) {
-    return sx + s.getDrawWidth() - 1;
+static constexpr int kMinRayLen = 2;
+static constexpr int kMaxRayLen = 10;
+static constexpr int kDesiredWire = 10;
+
+int Renderer::rightEdgeX(const Star& s, int startX) {
+    return startX + s.getDrawWidth() - 1;
+}
+
+int Renderer::clampRayLength(int len) {
+    if (len < kMinRayLen) return kMinRayLen;
+    if (len > kMaxRayLen) return kMaxRayLen;
+    return len;
 }
 
 void Renderer::placeLeftLabelThenWire(Canvas& canvas,
-                                      const Star& s,
+                                      const Star& labelStar,
                                       int wireStartX, int wireStartY,
                                       int gap, int centerX, int centerY) {
-    // Place star label so its right edge is 'gap' before wire start.
-    int starX = wireStartX - gap - s.getDrawWidth();
-    if (starX < 0) starX = 0;  // keep inside canvas
-    int starY = wireStartY;
+    // Place label so its right edge sits 'gap' columns before the wire start.
+    int labelStartX = wireStartX - gap - labelStar.getDrawWidth();
+    if (labelStartX < 0) labelStartX = 0;  // keep inside canvas
+    const int labelStartY = wireStartY;
 
-    s.draw(canvas, starX, starY);
+    // Draw the label star at the computed position.
+    labelStar.draw(canvas, labelStartX, labelStartY);
 
+    // Draw diagonal wire from start to center (glyph auto-chosen by DiagonalWire).
     DiagonalWire wire(wireStartX, wireStartY, centerX, centerY);
     wire.draw(canvas);
+}
+
+void Renderer::drawBaseAndConnector(Canvas& canvas,
+                                    const std::string& baseLabel,
+                                    int centerX, int centerY,
+                                    int desiredWireColumns) {
+    Star base(baseLabel);
+
+    // Compute a left position that leaves 'desiredWireColumns' between base and center.
+    int baseStartX = centerX - desiredWireColumns - base.getDrawWidth();
+    if (baseStartX < 0) baseStartX = 0;
+
+    // Draw the base star.
+    base.draw(canvas, baseStartX, centerY);
+
+    // Connect base to center on the same row with a horizontal wire.
+    const int baseRightX = rightEdgeX(base, baseStartX);
+    HorizontalWire hwire(baseRightX, centerX, centerY);
+    hwire.draw(canvas);
+}
+
+void Renderer::drawRay(Canvas& canvas,
+                       const Ray& ray,
+                       bool isUpward,
+                       const Parameters& params) {
+    // Clamp length and compute wire start.
+    const int length = clampRayLength(ray.len);
+    const auto start = isUpward
+                           ? startForUpRay(params.centerX, params.centerY, length)
+                           : startForDownRay(params.centerX, params.centerY, length);
+
+    // Build label star and draw label + wire.
+    Star labelStar(ray.label);
+    try {
+        placeLeftLabelThenWire(canvas, labelStar, start.first, start.second,
+                               params.labelGap, params.centerX, params.centerY);
+    } catch (const std::exception& ex) {
+        // Keep current behavior: swallow and report; continue rendering the rest.
+        std::cerr << "[Renderer] Ray draw failed: " << ex.what() << '\n';
+    }
 }
 
 std::string Renderer::getConstellation(const std::string& baseLabel,
@@ -30,46 +83,25 @@ std::string Renderer::getConstellation(const std::string& baseLabel,
                                        const Parameters& params) {
     Canvas canvas(params.canvasWidth, params.canvasHeight);
 
-    // 1) Center star
-    Star center(centerLabel);
-    center.draw(canvas, params.centerX, params.centerY);
-
-    // 2) Base on same row, connected horizontally to center
-    Star base(baseLabel);
-    int desiredWire = 10;
-    int baseX = params.centerX - desiredWire - base.getDrawWidth();
-    if (baseX < 0) baseX = 0;
-    int baseY = params.centerY;
-    base.draw(canvas, baseX, baseY);
-
-    HorizontalWire hwire(rightEdgeX(base, baseX), params.centerX, baseY);
-    hwire.draw(canvas);
-
-    // 3) Up rays (Slash): start at (cx - len, cy - len)
-    for (const auto& r : upRays) {
-        int len = (r.len < 2) ? 2 : (r.len > 10 ? 10 : r.len);
-        int sx = params.centerX - len;
-        int sy = params.centerY - len;
-        Star s(r.label);
-        try {
-            placeLeftLabelThenWire(canvas, s, sx, sy, params.labelGap, params.centerX, params.centerY);
-        } catch (const std::exception& e) {
-            std::cerr << e.what() << '\n';
-        }
+    // 1) Center star (fixed anchor).
+    {
+        Star center(centerLabel);
+        center.draw(canvas, params.centerX, params.centerY);
     }
 
-    // 4) Down rays (Backslash): start at (cx - len, cy + len)
-    for (const auto& r : downRays) {
-        int len = (r.len < 2) ? 2 : (r.len > 10 ? 10 : r.len);
-        int sx = params.centerX - len;
-        int sy = params.centerY + len;
-        Star s(r.label);
-        try {
-            placeLeftLabelThenWire(canvas, s, sx, sy, params.labelGap, params.centerX, params.centerY);
-        } catch (const std::exception& e) {
-            std::cerr << e.what() << '\n';
-        }
+    // 2) Base star + horizontal connector to center.
+    drawBaseAndConnector(canvas, baseLabel, params.centerX, params.centerY, kDesiredWire);
+
+    // 3) Upward rays ('/') that start above-left and converge into center.
+    for (const Ray& r : upRays) {
+        drawRay(canvas, r, /*isUpward=*/true, params);
     }
 
+    // 4) Downward rays ('\\') that start below-left and converge into center.
+    for (const Ray& r : downRays) {
+        drawRay(canvas, r, /*isUpward=*/false, params);
+    }
+
+    // 5) Return final ASCII image (trailing blanks trimmed per line).
     return canvas.getRender();
 }
