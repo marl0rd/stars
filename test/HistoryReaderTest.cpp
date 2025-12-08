@@ -9,7 +9,7 @@ TEST(HistoryReader, ReadsSampleFile) {
   ASSERT_TRUE(std::filesystem::exists(path));
 
   stars::HistoryReader reader;
-  auto entries = reader.readFile(path);
+  auto entries = reader.getEntries(path);
 
   ASSERT_EQ(entries.size(), 26);
   EXPECT_EQ(entries[0].raw, "ls");

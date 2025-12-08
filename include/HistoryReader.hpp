@@ -6,25 +6,21 @@
 
 namespace stars {
 
-/// @brief Represents a single bash history line.
-class HistoryEntry {
-   public:
-    std::string raw;
-    std::optional<long long> timestamp;
-};
-
-/// @brief Reads bash history files and returns entries.
+/// @brief Reads bash history files and returns entries (bash raw lines).
 class HistoryReader {
    public:
+    struct Entry {
+        std::string raw;
+        std::optional<long long> timestamp;
+    };
+
     const unsigned int LIMIT = 5000;
 
     HistoryReader() = default;
 
-    /// @brief Gets the default bash history file path (~/.bash_history).
+    // TODO: make configurable for other shells
     std::string getBashHistoryPath();
-
-    /// @brief Reads a history file into entries. @return A list of HistoryEntry lines.
-    std::vector<HistoryEntry> readFile(const std::string& path);
+    std::vector<Entry> getEntries(const std::string& path);
 };
 
 }  // namespace stars

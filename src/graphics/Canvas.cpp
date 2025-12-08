@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <stdexcept>
 
-namespace stars {
+using namespace stars;
 
 Canvas::Canvas(int w, int h)
     : w_(w), h_(h), buffer_(h, std::string(w, BLANK_CHAR)) {}
@@ -59,5 +59,3 @@ std::string Canvas::getRender() const {
     }
     return out;
 }
-
-}  // namespace stars

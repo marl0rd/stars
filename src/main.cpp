@@ -26,67 +26,65 @@ int main(int argc, char** argv) {
         return 0;
     }
     if (vm.count("list")) {
-        try {
-            stars::HistoryReader reader;
-            std::string histfile = reader.getBashHistoryPath();
-            auto entries = reader.readFile(histfile);
-            for (const auto& e : entries) std::cout << e.raw << '\n';
-            return 0;
-        } catch (const std::exception& ex) {
-            std::cerr << "Error: " << ex.what() << '\n';
-            return 1;
-        }
-    }
-
-    try {
         stars::HistoryReader reader;
         std::string histfile = reader.getBashHistoryPath();
-        auto entries = reader.readFile(histfile);
-
-        stars::CommandIndex index;
-        for (const auto& e : entries) index.addCommand(e.raw);
-
-        if (!vm.count("constellation")) {
-            // Default: render the most active base command (by total frequency)
-            const auto& indexMap = index.getIndexMap();
-            
-            // Pick base with highest cumulative variant frequency
-            const auto* bestIt = &(*indexMap.begin());
-            int bestSum = 0;
-            for (const auto& kv : indexMap) {
-                int sum = 0;
-                for (const auto& v : kv.second) sum += v.frequency;
-                if (sum > bestSum) {
-                    bestSum = sum;
-                    bestIt = &kv;
-                }
-            }
-            const std::string base = bestIt->first;
-            const auto& variants = bestIt->second;
-
-            stars::PlanParams pp;  // label len default 10
-            auto plan = stars::planOne(base, variants, pp);
-
-            stars::RenderParams rp;  // uses default canvas and center
-            std::cout << stars::Renderer::getRenderedConstellation(plan.baseLabel, plan.centerLabel, plan.upRays, plan.downRays, rp);
-            return 0;
-        } else {
-            const std::string base = vm["constellation"].as<std::string>();
-            if (!index.hasBase(base)) {
-                std::cerr << "Error: base command '" << base << "' not found in history.\n";
-                return 1;
-            }
-            const auto& variants = index.variantsOf(base);
-
-            stars::PlanParams pp;
-            auto plan = stars::planOne(base, variants, pp);
-
-            stars::RenderParams rp;  // default canvas & center
-            std::cout << stars::Renderer::getRenderedConstellation(plan.baseLabel, plan.centerLabel, plan.upRays, plan.downRays, rp);
-            return 0;
+        auto entries = reader.getEntries(histfile);
+        for (const auto& e : entries) {
+            std::cout << e.raw << '\n';
         }
-    } catch (const std::exception& ex) {
-        std::cerr << "Error: " << ex.what() << '\n';
-        return 1;
+        return 0;
     }
+
+    stars::HistoryReader reader;
+    std::string histfile = reader.getBashHistoryPath();
+    auto entries = reader.getEntries(histfile);
+
+    stars::CommandIndex index;
+    for (const auto& e : entries) {
+        index.addCommand(e.raw);
+    }
+
+    if (!vm.count("constellation")) {
+        // Get the most frequent base command
+        const auto& indexMap = index.getIndexMap();
+        const auto* bestIt = &(*indexMap.begin());
+        int bestSum = 0;
+        for (const auto& kv : indexMap) {
+            int sum = 0;
+            for (const auto& v : kv.second) sum += v.frequency;
+            if (sum > bestSum) {
+                bestSum = sum;
+                bestIt = &kv;
+            }
+        }
+        const std::string base = bestIt->first;
+        const auto& variants = bestIt->second;
+
+        // Plan the constellation
+        stars::PlanParams pp;
+        auto plan = stars::planOne(base, variants, pp);
+
+        // Render with default params
+        stars::Renderer::Parameters rp;
+
+        std::cout << stars::Renderer::getConstellation(plan.baseLabel, plan.centerLabel, plan.upRays, plan.downRays, rp);
+    } else {
+        const std::string base = vm["constellation"].as<std::string>();
+        if (!index.hasBase(base)) {
+            std::cerr << "Error: base command '" << base << "' not found in history.\n";
+            return 1;
+        }
+        const auto& variants = index.variantsOf(base);
+
+        // Plan the constellation
+        stars::PlanParams pp;
+        auto plan = stars::planOne(base, variants, pp);
+
+        // Render with default params
+        stars::Renderer::Parameters rp;
+
+        std::cout << stars::Renderer::getConstellation(plan.baseLabel, plan.centerLabel, plan.upRays, plan.downRays, rp);
+    }
+
+    return 0;
 }

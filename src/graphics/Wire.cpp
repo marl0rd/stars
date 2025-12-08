@@ -1,5 +1,5 @@
 #include "graphics/Wire.hpp"
 
-namespace stars {
+using namespace stars;
+
 Wire::~Wire() = default;
-}  // namespace stars

@@ -1,7 +1,7 @@
 #include "graphics/HorizontalWire.hpp"
 #include <algorithm>
 
-namespace stars {
+using namespace stars;
 
 HorizontalWire::HorizontalWire(int x1, int x2, int y)
   : x1_(x1), x2_(x2), y_(y) {}
@@ -14,4 +14,3 @@ void HorizontalWire::draw(Canvas& canvas) const {
   }
 }
 
-} // namespace stars

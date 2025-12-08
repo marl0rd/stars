@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-namespace stars {
+using namespace stars;
 
 int Renderer::rightEdgeX(const Star& s, int sx) {
     return sx + s.getDrawWidth() - 1;
@@ -11,7 +11,6 @@ int Renderer::rightEdgeX(const Star& s, int sx) {
 void Renderer::placeLeftLabelThenWire(Canvas& canvas,
                                       const Star& s,
                                       int wireStartX, int wireStartY,
-                                      DiagonalType type,
                                       int gap, int centerX, int centerY) {
     // Place star label so its right edge is 'gap' before wire start.
     int starX = wireStartX - gap - s.getDrawWidth();
@@ -20,40 +19,40 @@ void Renderer::placeLeftLabelThenWire(Canvas& canvas,
 
     s.draw(canvas, starX, starY);
 
-    DiagonalWire wire(wireStartX, wireStartY, centerX, centerY, type);
+    DiagonalWire wire(wireStartX, wireStartY, centerX, centerY);
     wire.draw(canvas);
 }
 
-std::string Renderer::getRenderedConstellation(const std::string& baseLabel,
-                                               const std::string& centerLabel,
-                                               const std::vector<Ray>& upRays,
-                                               const std::vector<Ray>& downRays,
-                                               const RenderParams& p) {
-    Canvas canvas(p.canvasWidth, p.canvasHeight);
+std::string Renderer::getConstellation(const std::string& baseLabel,
+                                       const std::string& centerLabel,
+                                       const std::vector<Ray>& upRays,
+                                       const std::vector<Ray>& downRays,
+                                       const Parameters& params) {
+    Canvas canvas(params.canvasWidth, params.canvasHeight);
 
     // 1) Center star
     Star center(centerLabel);
-    center.draw(canvas, p.centerX, p.centerY);
+    center.draw(canvas, params.centerX, params.centerY);
 
     // 2) Base on same row, connected horizontally to center
     Star base(baseLabel);
-    int desiredWire = 20;
-    int baseX = p.centerX - desiredWire - base.getDrawWidth();
+    int desiredWire = 10;
+    int baseX = params.centerX - desiredWire - base.getDrawWidth();
     if (baseX < 0) baseX = 0;
-    int baseY = p.centerY;
+    int baseY = params.centerY;
     base.draw(canvas, baseX, baseY);
 
-    HorizontalWire hwire(rightEdgeX(base, baseX), p.centerX, baseY);
+    HorizontalWire hwire(rightEdgeX(base, baseX), params.centerX, baseY);
     hwire.draw(canvas);
 
     // 3) Up rays (Slash): start at (cx - len, cy - len)
     for (const auto& r : upRays) {
-        int len = (r.len < 2) ? 2 : (r.len > 20 ? 20 : r.len);
-        int sx = p.centerX - len;
-        int sy = p.centerY - len;
+        int len = (r.len < 2) ? 2 : (r.len > 10 ? 10 : r.len);
+        int sx = params.centerX - len;
+        int sy = params.centerY - len;
         Star s(r.label);
         try {
-            placeLeftLabelThenWire(canvas, s, sx, sy, DiagonalType::Slash, p.labelGap, p.centerX, p.centerY);
+            placeLeftLabelThenWire(canvas, s, sx, sy, params.labelGap, params.centerX, params.centerY);
         } catch (const std::exception& e) {
             std::cerr << e.what() << '\n';
         }
@@ -61,12 +60,12 @@ std::string Renderer::getRenderedConstellation(const std::string& baseLabel,
 
     // 4) Down rays (Backslash): start at (cx - len, cy + len)
     for (const auto& r : downRays) {
-        int len = (r.len < 2) ? 2 : (r.len > 20 ? 20 : r.len);
-        int sx = p.centerX - len;
-        int sy = p.centerY + len;
+        int len = (r.len < 2) ? 2 : (r.len > 10 ? 10 : r.len);
+        int sx = params.centerX - len;
+        int sy = params.centerY + len;
         Star s(r.label);
         try {
-            placeLeftLabelThenWire(canvas, s, sx, sy, DiagonalType::Backslash, p.labelGap, p.centerX, p.centerY);
+            placeLeftLabelThenWire(canvas, s, sx, sy, params.labelGap, params.centerX, params.centerY);
         } catch (const std::exception& e) {
             std::cerr << e.what() << '\n';
         }
@@ -74,5 +73,3 @@ std::string Renderer::getRenderedConstellation(const std::string& baseLabel,
 
     return canvas.getRender();
 }
-
-}  // namespace stars

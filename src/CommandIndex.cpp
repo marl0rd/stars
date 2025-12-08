@@ -2,7 +2,7 @@
 #include "CommandTokenizer.hpp"
 #include <iostream>
 
-namespace stars {
+using namespace stars;
 
 void CommandIndex::addCommand(const std::string& line) {
   auto tokens = CommandTokenizer::getTokens(line);
@@ -42,5 +42,3 @@ void CommandIndex::printSummary() const {
     }
   }
 }
-
-}  // namespace stars
