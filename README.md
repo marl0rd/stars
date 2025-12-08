@@ -7,12 +7,11 @@ Type "stars" in your terminal and get your history of commands connected like th
 Create a constellation of you historical commands and learn from your mistakes in a graphical way. Also, it looks kinda cool. Maybe you want to use it as a screensaver, or maybe you just want to stare at it and pretend you’re an astronomer. I don’t care.
 
 ## This project is just starting... Development instructions:
-1. Install cmake, gdb, gcc, conan
-2. Clone the repo and cd to it
-3. conan install . --output-folder=build --build=missing
-4. cmake --build build/build/Release
-5. cd build/build/Release
-6. ./stars --help
+1. `Install build tools`: cmake, gdb, gcc, conan
+2. `Clone the repo and cd to it`: git clone ....
+3. `Download repo dependencies using conan`: conan install . --output-folder=build --build=missing
+4. `build it`: cmake --build build/build/Release
+5. `Run it`: build/build/Release/stars
 
 ## Current summary
 - Each base command (e.g., ls, git) becomes a central star
