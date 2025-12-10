@@ -14,53 +14,52 @@ Create a constellation of you historical commands and learn from your mistakes i
 5. `Run it`: build/build/Release/stars
 
 ## Current summary
-- Each base command (e.g., ls, git) becomes a central star
-- Its variants radiate diagonally like branches of a constellation.
+- Each base command (e.g., ls, git) becomes a central star. Let's say "ls"
+- Its variants radiate diagonally like branches of a constellation. "ls -l", "ls -a". that is if the flag is different.
+- If the flag specializes more, it follows the chronological order and keep expanding. let's say "ls -l", "ls -lr"
 - Multiple constellations are arranged side by side and stacked vertically to create a galaxy of commands.
-- This is not just a tree printer—it’s a mini ASCII graphic engine for terminal layouts.
+- It’s a mini ASCII graphic engine for terminal layouts.
+- Duplicates: skip identical commands; count frequency.
+- Currently only available for bash.
 
 ### Example Goal for Galaxy 1.0:
 ``` bash
-                             * <ls -la>                          *--------<ping 255.2...>
-                          /                                     /
-            * <ls -l>   /                 <ping 255.2...>-----*
-          /            *                                       \
-<ls>----* <ls -a>       \                                       \
-          \               * <ls --col>        <ping 255.3...>----*---<ping 255.3...>
+                          * <ls -ta>                 *--------<ping 255.25..>
+                        /                           /
+            * <ls -t> *                 <ping>-----*
+          /            \                            \
+<ls>----* <ls -r>       \                            \
+          \               * <ls -tal>                 *---<ping 255.3...>
            \             /
-            * <ls -al>           * <cd /hom>
+            * <ls -al> *         * <cd /hom>
                                 /
-                      <cd>----* <cd ..>                              <nano>
-                                \                                       |
-                                 * <cd -P>                              |
-                                                                        *<nano ~.config>
+                      <cd>----* <cd ..>            <nano>*--------*<nano .>
+                                \                        |
+                                 * <cd -P>               |
+                                                         *<nano ~.config>
 
-<rm>----* <rm *>------* <rm -r>------* <rm -r .>         * <git stat>
-          \                                             /
-           * <rm file>                      <git>----* <git log>
-                                                      \
-                                                       * <git add>
+<rm>----* <rm file>------* <rm -r file>             * <git stat>
+          \                                        /
+           * <rm *>                      <git>----* <git log>------*<git log --pretty>
+                                                   \
+                                                    * <git add>
 
 
-<echo>---* <echo hi>------* <echo bye>                <pwd>----* <pwd>
-           \                                             \
-            * <echo $VAR>                                 * <pwd -L>
+<echo>---* <echo hello>------* <echo hello world>   <pwd>----*<pwd>
+          \                                                   \
+           * <echo $VAR>                                       * <pwd -L>
 ```
-
-## Current Rules
-- Grouping: base → exact variants (no normalization).
-- Duplicates: skip identical commands; count frequency.
-- Pipelines: treat as single variant.
-- Sizing current formula:
-    - score = tokens + flags + 2×frequency + 0.25×char_length
-- clamp [2, 20]
-- Config file: ~/.config/stars/config.json or default in resources/.
 
 ## Recommended style
 - Header guards: use pragma once
-- Namespaces: stars
-- Indentation: 2 spaces
-- Naming style for Files, Variables, constants, classes, etc:  Java style
-- Pointers: smart pointers
-- Comments: concise doxygen style with ///
-- error handling: exceptions
+- Namespaces: stars. The cpp will use "using namespace stars"
+- Indentation style: Google
+- Naming style for Files, Variables, constants, classes, etc: Java style with Clean Code standards.
+- Memory Mangement: std:: smart pointers.
+- Structure: 
+  - include and src files for separating header from definition. No subfolders.
+  - When developing a class, make 1 class for a global idea and use it as depicted in Clean Code and Effective C++ books. Avoid doing like having a class called CommandIndex, another one called CommandTokenizer, etc. Just have 1 class and specialize it. Classes can be large (we skip the clean code standard here), but the method considerable.
+- Comments: concise doxygen style with /// but just brief for class and public members.
+- error handling: exceptions. No returning error code.
+- C++ std::20 and Boost 1.89.
+

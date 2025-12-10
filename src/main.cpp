@@ -1,90 +1,65 @@
 #include <boost/program_options.hpp>
+#include <cstdlib>
 #include <iostream>
+#include <memory>
+#include <string>
 
-#include "CommandIndex.hpp"
-#include "ConstellationPlanner.hpp"
-#include "HistoryReader.hpp"
-#include "graphics/Renderer.hpp"
+#include "Configuration.hpp"
+#include "Graph.hpp"
+#include "History.hpp"
+#include "Layout.hpp"
+#include "Parser.hpp"
+#include "Renderer.hpp"
+#include "Terminal.hpp"
 
-static constexpr const char* STARS_VERSION = "0.2.0";
+using namespace stars;
+namespace po = boost::program_options;
 
 int main(int argc, char** argv) {
-    namespace po = boost::program_options;
+    try {
+        po::options_description desc("stars options");
+        desc.add_options()("help,h", "Show help");
 
-    po::options_description desc("stars Options:");
-    desc.add_options()("help", "Show help message")("version", "Show version")("list", "Print the whole history")("constellation", po::value<std::string>(), "Render one constellation for the given base command");
+        po::variables_map vm;
+        po::store(po::parse_command_line(argc, argv, desc), vm);
+        po::notify(vm);
 
-    po::variables_map vm;
-    po::store(po::parse_command_line(argc, argv, desc), vm);
-
-    if (vm.count("help")) {
-        std::cout << desc << "\n";
-        return 0;
-    }
-    if (vm.count("version")) {
-        std::cout << "stars " << STARS_VERSION << "\n";
-        return 0;
-    }
-    if (vm.count("list")) {
-        stars::HistoryReader reader;
-        std::string histfile = reader.getBashHistoryPath();
-        auto entries = reader.getEntries(histfile);
-        for (const auto& e : entries) {
-            std::cout << e.raw << '\n';
+        if (vm.count("help")) {
+            std::cout << desc << "\n";
+            return 0;
         }
+
+        auto [termW, termH] = Terminal::getSize();
+        auto historyPath = Terminal::getHistoryPath();
+
+        std::size_t constellationLimit = 1;
+        std::string constallationOrder = "frequency";
+
+        Configuration config(historyPath, termW, termH, constellationLimit, constallationOrder);
+
+        auto history = std::make_unique<History>();
+        history->loadFromFile(config.getInputPath());
+
+        auto parser = std::make_unique<Parser>();
+        auto parsed = parser->parse(history->getRawLines());
+
+        auto graph = std::make_unique<Graph>();
+        graph->build(parsed);
+
+        auto layout = std::make_unique<Layout>();
+        layout->compute(*graph,
+                        config.getWidth(),
+                        config.getHeight(),
+                        config.getMaxConstellations(),
+                        config.getSortMode());
+
+        auto renderer = std::make_unique<Renderer>();
+        auto buffer = renderer->render(*graph, *layout);
+
+        Terminal::write(buffer);
         return 0;
+    } catch (const std::exception& ex) {
+        std::cerr << "stars: " << ex.what() << "\n";
+        return 1;
     }
-
-    stars::HistoryReader reader;
-    std::string histfile = reader.getBashHistoryPath();
-    auto entries = reader.getEntries(histfile);
-
-    stars::CommandIndex index;
-    for (const auto& e : entries) {
-        index.addCommand(e.raw);
-    }
-
-    if (!vm.count("constellation")) {
-        // Get the most frequent base command
-        const auto& indexMap = index.getIndexMap();
-        const auto* bestIt = &(*indexMap.begin());
-        int bestSum = 0;
-        for (const auto& kv : indexMap) {
-            int sum = 0;
-            for (const auto& v : kv.second) sum += v.frequency;
-            if (sum > bestSum) {
-                bestSum = sum;
-                bestIt = &kv;
-            }
-        }
-        const std::string base = bestIt->first;
-        const auto& variants = bestIt->second;
-
-        // Plan the constellation
-        stars::PlanParams pp;
-        auto plan = stars::planOne(base, variants, pp);
-
-        // Render with default params
-        stars::Renderer::Parameters rp;
-
-        std::cout << stars::Renderer::getConstellation(plan.baseLabel, plan.centerLabel, plan.upRays, plan.downRays, rp);
-    } else {
-        const std::string base = vm["constellation"].as<std::string>();
-        if (!index.hasBase(base)) {
-            std::cerr << "Error: base command '" << base << "' not found in history.\n";
-            return 1;
-        }
-        const auto& variants = index.variantsOf(base);
-
-        // Plan the constellation
-        stars::PlanParams pp;
-        auto plan = stars::planOne(base, variants, pp);
-
-        // Render with default params
-        stars::Renderer::Parameters rp;
-
-        std::cout << stars::Renderer::getConstellation(plan.baseLabel, plan.centerLabel, plan.upRays, plan.downRays, rp);
-    }
-
-    return 0;
 }

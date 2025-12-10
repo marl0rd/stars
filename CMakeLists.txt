@@ -9,23 +9,21 @@ add_compile_options(-Wall -Wextra -Wpedantic)
 
 # Dependencies
 find_package(Boost REQUIRED COMPONENTS program_options)
-find_package(GTest REQUIRED)
+find_package(GTest REQUIRED) # placeholder for future tests
 
 # Resources
 file(COPY ${CMAKE_SOURCE_DIR}/resources DESTINATION ${CMAKE_BINARY_DIR})
 
 # SDK
-add_library(stars_lib 
-    src/graphics/Canvas.cpp
-    src/graphics/DiagonalWire.cpp
-    src/graphics/HorizontalWire.cpp
-    src/graphics/Renderer.cpp
-    src/graphics/Star.cpp
-    src/graphics/Wire.cpp
-    src/CommandIndex.cpp 
-    src/CommandTokenizer.cpp
-    src/ConstellationPlanner.cpp
-    src/HistoryReader.cpp 
+add_library(stars_lib
+  src/Configuration.cpp
+  src/History.cpp
+  src/Parser.cpp
+  src/Graph.cpp
+  src/Layout.cpp
+  src/Renderer.cpp
+  src/Terminal.cpp
+  src/Command.cpp
 )
 target_include_directories(stars_lib PUBLIC include)
 target_link_libraries(stars_lib PUBLIC Boost::headers)
@@ -33,9 +31,3 @@ target_link_libraries(stars_lib PUBLIC Boost::headers)
 # Executable
 add_executable(stars src/main.cpp)
 target_link_libraries(stars PRIVATE stars_lib Boost::program_options)
-
-# Tests
-add_executable(stars_tests test/HistoryReaderTest.cpp)
-target_link_libraries(stars_tests PRIVATE stars_lib GTest::gtest_main)
-include(GoogleTest)
-gtest_discover_tests(stars_tests)
