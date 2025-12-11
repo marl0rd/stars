@@ -18,7 +18,6 @@ file(COPY ${CMAKE_SOURCE_DIR}/resources DESTINATION ${CMAKE_BINARY_DIR})
 add_library(stars_lib
   src/Configuration.cpp
   src/History.cpp
-  src/Parser.cpp
   src/Graph.cpp
   src/Layout.cpp
   src/Renderer.cpp

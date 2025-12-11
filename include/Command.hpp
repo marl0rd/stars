@@ -5,27 +5,29 @@
 
 namespace stars {
 
-/// command parsed from bash history line.
 class Command {
    public:
-    static Command parseFromRaw(const std::string& rawLine);
+    std::string original;
+    std::string base;
+    std::vector<std::string> flags;
+    std::vector<std::string> args;
+    std::size_t index = 0;
 
-    std::string getRaw() const;
-    const std::vector<std::string>& getTokens() const;
-    std::string getBase() const;
-    std::vector<std::string> getFlagsSorted() const;
-    std::vector<std::string> getArgs() const;
-    int getFlagsCount() const;
+    /// Parse a list of raw history lines into normalized Command objects.
+    static std::vector<Command> parseLines(const std::vector<std::string>& lines);
 
    private:
-    std::string raw_;
-    std::vector<std::string> tokens_;
-
+    static bool isSkippableLine(const std::string& line);
     static std::vector<std::string> tokenizeBoost(const std::string& line);
+
     static bool isEnvAssignment(const std::string& token);
     static bool isWrapper(const std::string& token);
     static bool isRedirection(const std::string& token);
+
     static std::vector<std::string> normalize(const std::vector<std::string>& tokens);
+    static std::string extractBase(const std::vector<std::string>& normalized);
+    static std::vector<std::string> extractFlagsSorted(const std::vector<std::string>& normalized);
+    static std::vector<std::string> extractArgs(const std::vector<std::string>& normalized);
 };
 
 }  // namespace stars

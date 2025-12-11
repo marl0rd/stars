@@ -9,8 +9,7 @@ namespace stars {
 class History {
    public:
     void loadFromFile(const std::string& path);
-
-    const std::vector<std::string>& getRawLines() const;
+    const std::vector<std::string>& getLines() const;
 
    private:
     std::vector<std::string> rawLines_;

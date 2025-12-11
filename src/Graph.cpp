@@ -1,12 +1,26 @@
 #include "Graph.hpp"
 
 #include <algorithm>
-#include <sstream>
 
 using namespace stars;
 
-std::string Graph::makeKey(const std::string& base,
-                           const std::set<std::string>& flags) {
+/// Sort pair<VariantVertex, metric> by metric ascending.
+static bool compareBySecondAsc(
+    const std::pair<Graph::Vertex, std::size_t>& a,
+    const std::pair<Graph::Vertex, std::size_t>& b) {
+    return a.second < b.second;
+}
+
+/// Sort pair<BaseVertex, metric> by metric descending.
+static bool compareBySecondDesc(
+    const std::pair<Graph::Vertex, std::size_t>& a,
+    const std::pair<Graph::Vertex, std::size_t>& b) {
+    return a.second > b.second;
+}
+
+// ---------- small utilities ----------
+
+std::string Graph::makeKey(const std::string& base, const std::set<std::string>& flags) {
     std::string key = base;
     key.push_back('|');
     bool first = true;
@@ -19,37 +33,26 @@ std::string Graph::makeKey(const std::string& base,
 }
 
 std::string Graph::makeLabel(const std::string& base, const std::set<std::string>& flags) {
-    // Build label: "<base [-f1 -f2 ...]>"
     std::string label;
-    label.reserve(base.size() + 4 + flags.size() * 4);  // pre-reserve a bit
-
     label.push_back('<');
     label.append(base);
-
     if (!flags.empty()) {
         label.push_back(' ');
         bool first = true;
         for (const auto& f : flags) {
-            // Add space between flags to keep it readable.
-            if (!first) {
-                label.push_back(' ');
-            }
+            if (!first) label.push_back(' ');
             label.append(f);
             first = false;
         }
     }
-
     label.push_back('>');
     return label;
 }
 
-bool Graph::isSuperset(const std::set<std::string>& smaller,
-                       const std::set<std::string>& larger) {
-    if (smaller.size() > larger.size()) return false;
-    return std::includes(larger.begin(), larger.end(), smaller.begin(), smaller.end());
+bool Graph::isStrictSuperset(const std::set<std::string>& a, const std::set<std::string>& b) {
+    if (a.size() >= b.size()) return false;
+    return std::includes(b.begin(), b.end(), a.begin(), a.end());
 }
-
-// ---------- Build pipeline ----------
 
 void Graph::clearState() {
     graph_.clear();
@@ -57,300 +60,216 @@ void Graph::clearState() {
     variantVertices_.clear();
 }
 
-/// Compute earliest index for each (base, flags-set).
-///
-/// We use std::map for deterministic ordering, and std::set<std::string>
-/// for the flags to ensure uniqueness and predictability.
-std::map<std::string, std::map<std::set<std::string>, std::size_t>>
-Graph::computeEarliestIndicesByBase(const std::vector<ParsedCommand>& commands) const {
-    std::map<std::string, std::map<std::set<std::string>, std::size_t>> result;
+// ---------- build ----------
 
-    for (const auto& cmd : commands) {
-        const std::string base = cmd.base;
-
-        // Normalize flags to a set.
-        std::set<std::string> flagSet(cmd.flags.begin(), cmd.flags.end());
-
-        auto& byFlags = result[base];
-        auto it = byFlags.find(flagSet);
-        if (it == byFlags.end()) {
-            byFlags.emplace(flagSet, cmd.index);
-        } else {
-            // Keep the earliest (smallest) index seen.
-            it->second = std::min(it->second, cmd.index);
-        }
-    }
-
-    return result;
-}
-
-/// Count occurrences for each (base, flags-set) across all commands.
-/// This matches the requirement "Duplicates: skip identical commands; count frequency".
-std::unordered_map<std::string, std::size_t>
-Graph::computeVariantFrequencies(const std::vector<ParsedCommand>& commands) const {
-    std::unordered_map<std::string, std::size_t> freq;
-
-    for (const auto& cmd : commands) {
-        const std::string base = cmd.base;
-
-        // Normalize flags to a set to group variants.
-        std::set<std::string> flagSet(cmd.flags.begin(), cmd.flags.end());
-
-        const std::string key = makeKey(base, flagSet);
-        auto it = freq.find(key);
-        if (it == freq.end()) {
-            freq.emplace(key, 1);
-        } else {
-            it->second += 1;
-        }
-    }
-
-    return freq;
-}
-
-Vertex Graph::createBaseVertex(const std::string& base) {
-    Vertex v = boost::add_vertex(graph_);
-    graph_[v].label = "<" + base + ">";
-    graph_[v].base = base;
-    graph_[v].flags.clear();
-    graph_[v].isBase = true;
-    graph_[v].firstSeenIndex = std::numeric_limits<std::size_t>::max();
-    graph_[v].frequency = 0;  // Not meaningful for base.
-    baseVertices_[base] = v;
-    return v;
-}
-
-Vertex Graph::createVariantVertex(const std::string& base,
-                                  const std::set<std::string>& flags,
-                                  std::size_t firstIndex,
-                                  std::size_t frequency) {
-    Vertex v = boost::add_vertex(graph_);
-    auto& data = graph_[v];
-
-    data.base = base;
-    data.flags = flags;
-    data.label = makeLabel(base, flags);
-    data.isBase = false;
-    data.firstSeenIndex = firstIndex;
-    data.frequency = frequency;
-
-    const std::string key = makeKey(base, flags);
-    variantVertices_[key] = v;
-
-    return v;
-}
-
-void Graph::createBaseToVariantEdges() {
-    for (const auto& entry : variantVertices_) {
-        const std::string& key = entry.first;
-        Vertex variant = entry.second;
-
-        // Extract base from "base|f1,f2,..."
-        const std::size_t pipePos = key.find('|');
-        std::string base = pipePos == std::string::npos ? key : key.substr(0, pipePos);
-
-        auto baseIt = baseVertices_.find(base);
-        if (baseIt == baseVertices_.end()) {
-            // Defensive: should not happen if build() is consistent.
-            continue;
-        }
-        Vertex baseV = baseIt->second;
-
-        boost::add_edge(baseV, variant, graph_);
-    }
-}
-
-void Graph::createSpecializationEdges() {
-    // For each base, collect its variants and add A -> B where B is the next
-    // chronological superset of A.
-    for (const auto& baseEntry : baseVertices_) {
-        const std::string& base = baseEntry.first;
-        std::vector<Vertex> variants = collectVariantVerticesForBase(base);
-
-        // Sort by first seen index for chronological chaining.
-        std::sort(variants.begin(), variants.end(),
-                  [this](Vertex a, Vertex b) {
-                      return graph_[a].firstSeenIndex < graph_[b].firstSeenIndex;
-                  });
-
-        createSpecializationEdgesForBase(base, variants);
-    }
-}
-
-void Graph::createSpecializationEdgesForBase(const std::string& base,
-                                             const std::vector<Vertex>& variants) {
-    (void)base;  // Base name is not needed for logic; kept for clarity.
-
-    // For every variant A, find the next variant B that is a strict superset of A.
-    for (std::size_t i = 0; i < variants.size(); ++i) {
-        const auto& flagsA = graph_[variants[i]].flags;
-
-        for (std::size_t j = i + 1; j < variants.size(); ++j) {
-            const auto& flagsB = graph_[variants[j]].flags;
-
-            if (flagsA == flagsB) {
-                continue;  // Not a strict superset.
-            }
-
-            const bool superset = isSuperset(flagsA, flagsB);
-            if (superset) {
-                boost::add_edge(variants[i], variants[j], graph_);
-                break;  // Chain to the next chronological superset only.
-            }
-        }
-    }
-}
-
-// ---------- Public API ----------
-
-/// Build the graph according to rules:
-/// - Each base command becomes a central star.
-/// - Variants (distinct flag sets) attach to base.
-/// - Specialized variants (flag superset) chain chronologically.
-/// - Duplicates: identical commands increment frequency; skip duplicate nodes.
-void Graph::build(const std::vector<ParsedCommand>& commands) {
+/// Linear, easy-to-read build:
+/// 1) Create base vertices.
+/// 2) Aggregate variants (base+flags) -> earliest index + frequency.
+/// 3) Create variant vertices with labels.
+/// 4) Add base->variant edges.
+/// 5) For each base, order variants chronologically and chain to next strict superset.
+void Graph::build(const std::vector<Command>& commands) {
     clearState();
 
-    // 1) Collect earliest indices per (base, flags) and frequencies per (base, flags).
-    const auto earliestByBase = computeEarliestIndicesByBase(commands);
-    const auto frequencies = computeVariantFrequencies(commands);
-
-    // 2) Create base vertices.
-    for (const auto& baseEntry : earliestByBase) {
-        const std::string& base = baseEntry.first;
-        createBaseVertex(base);
+    // 1) Collect all bases and create base vertices.
+    std::set<std::string> bases;
+    for (const auto& cmd : commands) {
+        const std::string b = cmd.getBase();
+        if (!b.empty()) bases.insert(b);
+    }
+    for (const auto& base : bases) {
+        Vertex v = boost::add_vertex(graph_);
+        graph_[v].label = "<" + base + ">";
+        graph_[v].base = base;
+        graph_[v].flags.clear();
+        graph_[v].frequency = 0;
+        graph_[v].isBase = true;
+        graph_[v].firstSeenIndex = std::numeric_limits<std::size_t>::max();
+        baseVertices_[base] = v;
     }
 
-    // 3) Create variant vertices for each base + flags-set with earliest index.
-    for (const auto& baseEntry : earliestByBase) {
-        const std::string& base = baseEntry.first;
-        const auto& flagsMap = baseEntry.second;
+    // 2) Aggregate variants for (base, flags-set).
+    struct Agg {
+        std::size_t earliest = std::numeric_limits<std::size_t>::max();
+        std::size_t freq = 0;
+        std::set<std::string> flags;
+        std::string base;
+    };
+    std::unordered_map<std::string, Agg> aggByKey;
 
-        for (const auto& flagsEntry : flagsMap) {
-            const std::set<std::string>& flags = flagsEntry.first;
-            const std::size_t firstIdx = flagsEntry.second;
+    for (const auto& cmd : commands) {
+        const std::string base = cmd.getBase();
+        if (base.empty()) continue;
 
-            const std::string key = makeKey(base, flags);
+        // Build flag set (flags from Command are already sorted).
+        std::set<std::string> flagSet(cmd.getFlags().begin(), cmd.getFlags().end());
+        const std::string key = makeKey(base, flagSet);
 
-            // Frequency should exist; if not, default to 0 (defensive).
-            std::size_t freq = 0;
-            auto it = frequencies.find(key);
-            if (it != frequencies.end()) {
-                freq = it->second;
+        auto it = aggByKey.find(key);
+        if (it == aggByKey.end()) {
+            Agg a;
+            a.earliest = cmd.getIndex();
+            a.freq = 1;
+            a.flags = flagSet;
+            a.base = base;
+            aggByKey.emplace(key, std::move(a));
+        } else {
+            if (cmd.getIndex() < it->second.earliest) {
+                it->second.earliest = cmd.getIndex();
             }
-
-            createVariantVertex(base, flags, firstIdx, freq);
+            it->second.freq += 1;
         }
+    }
+
+    // 3) Create variant vertices with labels and store in map.
+    for (const auto& kv : aggByKey) {
+        const Agg& a = kv.second;
+
+        Vertex v = boost::add_vertex(graph_);
+        graph_[v].base = a.base;
+        graph_[v].flags = a.flags;
+        graph_[v].label = makeLabel(a.base, a.flags);
+        graph_[v].isBase = false;
+        graph_[v].firstSeenIndex = a.earliest;
+        graph_[v].frequency = a.freq;
+
+        variantVertices_[kv.first] = v;
     }
 
     // 4) Connect base -> variant edges.
-    createBaseToVariantEdges();
+    for (const auto& kv : variantVertices_) {
+        const std::string& key = kv.first;
+        Vertex variant = kv.second;
 
-    // 5) Create specialization chains.
-    createSpecializationEdges();
+        const std::size_t pipePos = key.find('|');
+        const std::string base = (pipePos == std::string::npos) ? key : key.substr(0, pipePos);
+
+        auto itBase = baseVertices_.find(base);
+        if (itBase != baseVertices_.end()) {
+            boost::add_edge(itBase->second, variant, graph_);
+        }
+    }
+
+    // 5) Specialization chains: chronological order + strict superset of flags.
+    for (const auto& basePair : baseVertices_) {
+        const std::string& base = basePair.first;
+
+        // Gather variants for this base with their earliest index.
+        std::vector<std::pair<Vertex, std::size_t>> variantsWithTime;
+        variantsWithTime.reserve(16);
+
+        for (const auto& kv : variantVertices_) {
+            const std::size_t pipePos = kv.first.find('|');
+            const std::string keyBase =
+                (pipePos == std::string::npos) ? kv.first : kv.first.substr(0, pipePos);
+            if (keyBase == base) {
+                Vertex v = kv.second;
+                variantsWithTime.emplace_back(v, graph_[v].firstSeenIndex);
+            }
+        }
+
+        // Order by time ascending.
+        std::sort(variantsWithTime.begin(), variantsWithTime.end(), compareBySecondAsc);
+
+        // For each variant A, link to next later variant B that strictly supersets A's flags.
+        for (std::size_t i = 0; i < variantsWithTime.size(); ++i) {
+            Vertex va = variantsWithTime[i].first;
+            const auto& flagsA = graph_[va].flags;
+
+            for (std::size_t j = i + 1; j < variantsWithTime.size(); ++j) {
+                Vertex vb = variantsWithTime[j].first;
+                const auto& flagsB = graph_[vb].flags;
+
+                if (isStrictSuperset(flagsA, flagsB)) {
+                    boost::add_edge(va, vb, graph_);
+                    break;  // chain only to the next chronological superset
+                }
+            }
+        }
+    }
 }
 
-const BoostGraph& Graph::getBoostGraph() const {
-    return graph_;
-}
+const Graph::BoostGraph& Graph::getBoostGraph() const { return graph_; }
 
-std::vector<Vertex> Graph::getBaseVerticesOrdered(const std::string& sortMode) const {
-    std::vector<Vertex> bases;
-    bases.reserve(baseVertices_.size());
+std::vector<Graph::Vertex> Graph::getBaseVerticesOrdered(const std::string& sortMode) const {
+    std::vector<std::pair<Vertex, std::size_t>> basesWithMetric;
+    basesWithMetric.reserve(baseVertices_.size());
 
-    for (const auto& entry : baseVertices_) {
-        bases.push_back(entry.second);
+    // Precompute metrics: frequency sum or earliest time.
+    for (const auto& kv : baseVertices_) {
+        Vertex bv = kv.second;
+        const std::string& baseName = graph_[bv].base;
+
+        std::size_t metric = 0;
+        if (sortMode == "frequency") {
+            // Sum variant frequencies for this base.
+            for (auto v : boost::make_iterator_range(boost::vertices(graph_))) {
+                const auto& d = graph_[v];
+                if (!d.isBase && d.base == baseName) {
+                    metric += d.frequency;
+                }
+            }
+        } else {
+            // Earliest variant time for this base.
+            metric = std::numeric_limits<std::size_t>::max();
+            for (auto v : boost::make_iterator_range(boost::vertices(graph_))) {
+                const auto& d = graph_[v];
+                if (!d.isBase && d.base == baseName) {
+                    if (d.firstSeenIndex < metric) metric = d.firstSeenIndex;
+                }
+            }
+        }
+
+        basesWithMetric.emplace_back(bv, metric);
     }
 
     if (sortMode == "frequency") {
-        // Sort by sum of variant frequencies, descending.
-        std::sort(bases.begin(), bases.end(),
-                  [this](Vertex a, Vertex b) {
-                      const std::size_t fa = computeBaseFrequency(a);
-                      const std::size_t fb = computeBaseFrequency(b);
-                      return fa > fb;
-                  });
+        std::sort(basesWithMetric.begin(), basesWithMetric.end(), compareBySecondDesc);
     } else {
-        // Sort by earliest variant time (ascending).
-        std::sort(bases.begin(), bases.end(),
-                  [this](Vertex a, Vertex b) {
-                      const std::size_t ta = computeBaseEarliestTime(a);
-                      const std::size_t tb = computeBaseEarliestTime(b);
-                      return ta < tb;
-                  });
+        std::sort(basesWithMetric.begin(), basesWithMetric.end(), compareBySecondAsc);
     }
 
-    return bases;
-}
-
-std::vector<Vertex> Graph::collectVariantVerticesForBase(const std::string& base) const {
+    // Strip metrics, return vertex order.
     std::vector<Vertex> out;
-    out.reserve(16);
-
-    // Walk through variant key -> vertex map and keep those with the given base.
-    for (const auto& entry : variantVertices_) {
-        const std::string& key = entry.first;
-        Vertex v = entry.second;
-
-        const std::size_t pipePos = key.find('|');
-        const std::string keyBase = pipePos == std::string::npos ? key : key.substr(0, pipePos);
-
-        if (keyBase == base) {
-            out.push_back(v);
-        }
-    }
-
+    out.reserve(basesWithMetric.size());
+    for (const auto& p : basesWithMetric) out.push_back(p.first);
     return out;
 }
 
-std::vector<Vertex> Graph::getVariantsForBase(Vertex baseVertex) const {
-    std::vector<Vertex> out;
-
+std::vector<Graph::Vertex> Graph::getVariantsForBase(Vertex baseVertex) const {
+    std::vector<std::pair<Vertex, std::pair<std::size_t, std::size_t>>> items;  // v, (flagCount, time)
     const std::string baseName = graph_[baseVertex].base;
-    out = collectVariantVerticesForBase(baseName);
-
-    // Order variants: smaller flag count first, then earliest index.
-    std::sort(out.begin(), out.end(),
-              [this](Vertex a, Vertex b) {
-                  const std::size_t sa = graph_[a].flags.size();
-                  const std::size_t sb = graph_[b].flags.size();
-                  if (sa != sb) return sa < sb;
-                  return graph_[a].firstSeenIndex < graph_[b].firstSeenIndex;
-              });
-
-    return out;
-}
-
-// ---------- Aggregation helpers ----------
-
-std::size_t Graph::computeBaseFrequency(Vertex baseVertex) const {
-    const std::string baseName = graph_[baseVertex].base;
-    std::size_t total = 0;
 
     for (auto v : boost::make_iterator_range(boost::vertices(graph_))) {
-        const auto& data = graph_[v];
-        if (!data.isBase && data.base == baseName) {
-            total += data.frequency;
+        const auto& d = graph_[v];
+        if (!d.isBase && d.base == baseName) {
+            std::size_t fc = d.flags.size();
+            std::size_t t = d.firstSeenIndex;
+            items.emplace_back(v, std::make_pair(fc, t));
         }
     }
 
-    return total;
-}
+    // Sort by fewer flags first, then earliest time.
+    for (std::size_t i = 0; i + 1 < items.size(); ++i) {
+        for (std::size_t j = i + 1; j < items.size(); ++j) {
+            const auto& ai = items[i].second;
+            const auto& aj = items[j].second;
+            bool swapNeeded = false;
 
-std::size_t Graph::computeBaseEarliestTime(Vertex baseVertex) const {
-    const std::string baseName = graph_[baseVertex].base;
+            if (ai.first > aj.first) {
+                swapNeeded = true;  // more flags should go later
+            } else if (ai.first == aj.first && ai.second > aj.second) {
+                swapNeeded = true;  // same flags count: later time should go later
+            }
 
-    std::size_t earliest = std::numeric_limits<std::size_t>::max();
-
-    for (auto v : boost::make_iterator_range(boost::vertices(graph_))) {
-        const auto& data = graph_[v];
-        if (!data.isBase && data.base == baseName) {
-            if (data.firstSeenIndex < earliest) {
-                earliest = data.firstSeenIndex;
+            if (swapNeeded) {
+                std::swap(items[i], items[j]);
             }
         }
     }
 
-    // If no variants, keep max; callers should handle sorting with care.
-    return earliest;
+    std::vector<Vertex> out;
+    out.reserve(items.size());
+    for (const auto& it : items) out.push_back(it.first);
+    return out;
 }
