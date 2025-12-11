@@ -74,8 +74,8 @@ std::string Renderer::render(const Graph& graph, const Layout& layout) const {
 
     // Draw edges: first base->variant, then variant->variant (specialization).
     for (auto e : boost::make_iterator_range(boost::edges(g))) {
-        Vertex src = boost::source(e, g);
-        Vertex dst = boost::target(e, g);
+        Graph::Vertex src = boost::source(e, g);
+        Graph::Vertex dst = boost::target(e, g);
         Position ps = layout.getPosition(src);
         Position pd = layout.getPosition(dst);
         drawConnector(canvas, ps, pd);

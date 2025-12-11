@@ -33,10 +33,11 @@ int main(int argc, char** argv) {
     auto renderer = std::make_unique<Renderer>();
     auto [termW, termH] = Terminal::getSize();
     auto historyPath = Terminal::getHistoryPath();
+    auto testHistoryPath = "resources/.bash_history";
     auto constellationLimit = 1;
     auto constallationOrder = "frequency";
 
-    Configuration config(historyPath, termW, termH, constellationLimit, constallationOrder);
+    Configuration config(testHistoryPath, termW, termH, constellationLimit, constallationOrder);
     history->loadFromFile(config.getInputPath());
     graph->build(Command::parseLines(history->getLines()));
     layout->compute(*graph, config.getWidth(), config.getHeight(), config.getMaxConstellations(), config.getSortMode());

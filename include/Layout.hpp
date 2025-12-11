@@ -22,17 +22,17 @@ class Layout {
                  std::size_t maxConstellations,
                  const std::string& sortMode);
 
-    /// Get position for a vertex (if present).
-    Position getPosition(Vertex v) const;
+    /// Get position for a graph::vertex (if present).
+    Position getPosition(Graph::Vertex v) const;
 
     /// Return computed canvas size.
     std::pair<std::size_t, std::size_t> getCanvasSize() const;
 
     /// Return all assigned positions.
-    const std::unordered_map<Vertex, Position>& getPositions() const;
+    const std::unordered_map<Graph::Vertex, Position>& getPositions() const;
 
    private:
-    std::unordered_map<Vertex, Position> positions_;
+    std::unordered_map<Graph::Vertex, Position> positions_;
     std::size_t canvasWidth_ = 0;
     std::size_t canvasHeight_ = 0;
 };

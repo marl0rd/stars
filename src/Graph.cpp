@@ -18,8 +18,7 @@ static bool compareBySecondDesc(
     return a.second > b.second;
 }
 
-// ---------- small utilities ----------
-
+/// Create a unique key for (base, flags-set).
 std::string Graph::makeKey(const std::string& base, const std::set<std::string>& flags) {
     std::string key = base;
     key.push_back('|');
@@ -32,6 +31,7 @@ std::string Graph::makeKey(const std::string& base, const std::set<std::string>&
     return key;
 }
 
+/// Create display label for (base, flags-set).
 std::string Graph::makeLabel(const std::string& base, const std::set<std::string>& flags) {
     std::string label;
     label.push_back('<');
@@ -49,32 +49,32 @@ std::string Graph::makeLabel(const std::string& base, const std::set<std::string
     return label;
 }
 
+/// Check if set a is a strict superset of set b.
 bool Graph::isStrictSuperset(const std::set<std::string>& a, const std::set<std::string>& b) {
     if (a.size() >= b.size()) return false;
     return std::includes(b.begin(), b.end(), a.begin(), a.end());
 }
 
+/// Clear all graph state.
 void Graph::clearState() {
     graph_.clear();
     baseVertices_.clear();
     variantVertices_.clear();
 }
 
-// ---------- build ----------
-
-/// Linear, easy-to-read build:
+void Graph::build(const std::vector<Command>& commands) {
 /// 1) Create base vertices.
 /// 2) Aggregate variants (base+flags) -> earliest index + frequency.
 /// 3) Create variant vertices with labels.
 /// 4) Add base->variant edges.
 /// 5) For each base, order variants chronologically and chain to next strict superset.
-void Graph::build(const std::vector<Command>& commands) {
+
     clearState();
 
     // 1) Collect all bases and create base vertices.
     std::set<std::string> bases;
     for (const auto& cmd : commands) {
-        const std::string b = cmd.getBase();
+        const std::string b = cmd.base;
         if (!b.empty()) bases.insert(b);
     }
     for (const auto& base : bases) {
@@ -98,24 +98,24 @@ void Graph::build(const std::vector<Command>& commands) {
     std::unordered_map<std::string, Agg> aggByKey;
 
     for (const auto& cmd : commands) {
-        const std::string base = cmd.getBase();
+        const std::string base = cmd.base;
         if (base.empty()) continue;
 
         // Build flag set (flags from Command are already sorted).
-        std::set<std::string> flagSet(cmd.getFlags().begin(), cmd.getFlags().end());
+        std::set<std::string> flagSet(cmd.flags.begin(), cmd.flags.end());
         const std::string key = makeKey(base, flagSet);
 
         auto it = aggByKey.find(key);
         if (it == aggByKey.end()) {
             Agg a;
-            a.earliest = cmd.getIndex();
+            a.earliest = cmd.index;
             a.freq = 1;
             a.flags = flagSet;
             a.base = base;
             aggByKey.emplace(key, std::move(a));
         } else {
-            if (cmd.getIndex() < it->second.earliest) {
-                it->second.earliest = cmd.getIndex();
+            if (cmd.index < it->second.earliest) {
+                it->second.earliest = cmd.index;
             }
             it->second.freq += 1;
         }

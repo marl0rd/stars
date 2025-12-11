@@ -76,7 +76,7 @@ void Layout::compute(const Graph& graph,
     }
 }
 
-Position Layout::getPosition(Vertex v) const {
+Position Layout::getPosition(Graph::Vertex v) const {
     auto it = positions_.find(v);
     if (it != positions_.end()) return it->second;
     return Position{0, 0};
@@ -86,6 +86,6 @@ std::pair<std::size_t, std::size_t> Layout::getCanvasSize() const {
     return {canvasWidth_, canvasHeight_};
 }
 
-const std::unordered_map<Vertex, Position>& Layout::getPositions() const {
+const std::unordered_map<Graph::Vertex, Position>& Layout::getPositions() const {
     return positions_;
 }
