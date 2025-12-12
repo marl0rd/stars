@@ -30,3 +30,8 @@ target_link_libraries(stars_lib PUBLIC Boost::headers)
 # Executable
 add_executable(stars src/main.cpp)
 target_link_libraries(stars PRIVATE stars_lib Boost::program_options)
+
+# Tests
+add_executable(stars_tests test/DefaultTest.cpp)
+target_link_libraries(stars_tests PRIVATE stars_lib GTest::gtest_main)
+include(GoogleTest)
