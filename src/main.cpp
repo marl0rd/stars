@@ -35,12 +35,11 @@ int main(int argc, char** argv) {
     auto historyPath = Terminal::getHistoryPath();
     auto testHistoryPath = "resources/.bash_history";
     auto constellationLimit = 1;
-    auto constallationOrder = "frequency";
 
-    Configuration config(testHistoryPath, termW, termH, constellationLimit, constallationOrder);
+    Configuration config(testHistoryPath, termW, termH, constellationLimit);
     history->loadFromFile(config.getInputPath());
     graph->build(Command::parseLines(history->getLines()));
-    layout->compute(*graph, config.getWidth(), config.getHeight(), config.getMaxConstellations(), config.getSortMode());
+    layout->compute(*graph, config.getWidth(), config.getHeight(), config.getMaxConstellations());
     Terminal::write(renderer->render(*graph, *layout));
     return 0;
 }

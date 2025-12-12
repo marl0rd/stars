@@ -13,6 +13,7 @@ namespace stars {
 
 class Graph {
    public:
+
     struct StarVertex {
         std::string label;               ///< Display label, e.g., "<ls -al>".
         std::string base;                ///< Base command (e.g., "ls").
@@ -25,12 +26,13 @@ class Graph {
     using BoostGraph = boost::adjacency_list<boost::vecS, boost::vecS, boost::directedS, StarVertex>;
     using Vertex = BoostGraph::vertex_descriptor;
 
+    Graph() = default;
+
     void build(const std::vector<Command>& commands);
 
     const BoostGraph& getBoostGraph() const;
 
-    /// Order base vertices for display. "frequency" or "time". TODO: enum
-    std::vector<Vertex> getBaseVerticesOrdered(const std::string& sortMode) const;
+    std::vector<Vertex> getBaseVertices() const;
 
     /// Return variant vertices for a base, ordered by (fewer flags first, then earliest time).
     std::vector<Vertex> getVariantsForBase(Vertex baseVertex) const;

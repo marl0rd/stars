@@ -24,14 +24,14 @@ Create a constellation of you historical commands and learn from your mistakes i
 
 ### Example Goal for Galaxy 1.0:
 ``` bash
-                          * <ls -ta>
-                        /
-            * <ls -t> *
-          /            \
-<ls>----* <ls -r>       \
-          \               * <ls -tal>
+                          * <ls -ta>                 *--------<ping 255.25..>
+                        /                           /
+            * <ls -t> *                 <ping>-----*
+          /            \                            \
+<ls>----* <ls -r>       \                            \
+          \               * <ls -tal>                 *---<ping 255.3...>
            \             /
-            * <ls -al> *
+            * <ls -al> *         * <cd /hom>
                                 /
                       <cd>----* <cd ..>            <nano>*--------*<nano .>
                                 \                        |

@@ -12,8 +12,7 @@ using namespace stars;
 void Layout::compute(const Graph& graph,
                      std::size_t width,
                      std::size_t height,
-                     std::size_t maxConstellations,
-                     const std::string& sortMode) {
+                     std::size_t maxConstellations) {
     positions_.clear();
     canvasWidth_ = width;
     canvasHeight_ = height;
@@ -22,13 +21,12 @@ void Layout::compute(const Graph& graph,
     const std::size_t horizStep = 8;         // columns between chain nodes
     const std::size_t vertStep = 1;          // rows between branches
     const std::size_t constellationGap = 6;  // rows between constellations
+    std::size_t currentRow = 10;             // start row for first constellation
 
-    auto bases = graph.getBaseVerticesOrdered(sortMode);
+    auto bases = graph.getBaseVertices();
     if (bases.size() > maxConstellations) {
         bases.resize(maxConstellations);
     }
-
-    std::size_t currentRow = 2;  // start with some top padding
 
     for (std::size_t bi = 0; bi < bases.size(); ++bi) {
         auto base = bases[bi];
@@ -68,15 +66,14 @@ void Layout::compute(const Graph& graph,
         }
 
         // Move row down for next constellation.
-        currentRow += std::max<std::size_t>(constellationGap,
-                                            (branchIndex + 1) * vertStep + 2);
+        currentRow += std::max<std::size_t>(constellationGap, (branchIndex + 1) * vertStep + 2);
         if (currentRow >= height - 1) {
             break;  // stop if out of canvas
         }
     }
 }
 
-Position Layout::getPosition(Graph::Vertex v) const {
+Layout::Position Layout::getPosition(Graph::Vertex v) const {
     auto it = positions_.find(v);
     if (it != positions_.end()) return it->second;
     return Position{0, 0};
@@ -86,6 +83,6 @@ std::pair<std::size_t, std::size_t> Layout::getCanvasSize() const {
     return {canvasWidth_, canvasHeight_};
 }
 
-const std::unordered_map<Graph::Vertex, Position>& Layout::getPositions() const {
+const std::unordered_map<Graph::Vertex, Layout::Position>& Layout::getPositions() const {
     return positions_;
 }

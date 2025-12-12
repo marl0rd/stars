@@ -6,6 +6,8 @@
 
 using namespace stars;
 
+Command::Command(): original(), base(), flags(), args(), index(0) {}
+
 std::vector<Command> Command::parseLines(const std::vector<std::string>& lines) {
     std::vector<Command> out;
     out.reserve(lines.size());

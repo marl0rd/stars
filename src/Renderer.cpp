@@ -6,7 +6,7 @@ using namespace stars;
 
 /// Draw a single star '*' and put its label to the right.
 void Renderer::drawStar(std::vector<std::string>& canvas,
-                        const Position& p,
+                        const Layout::Position& p,
                         const std::string& label) {
     if (p.y >= canvas.size()) return;
     auto& row = canvas[p.y];
@@ -26,8 +26,8 @@ void Renderer::drawStar(std::vector<std::string>& canvas,
 /// Draw connector using '-', '/', '\' based on direction.
 /// We step from a to b along a simple Bresenham-like line.
 void Renderer::drawConnector(std::vector<std::string>& canvas,
-                             const Position& a,
-                             const Position& b) {
+                             const Layout::Position& a,
+                             const Layout::Position& b) {
     int x0 = static_cast<int>(a.x);
     int y0 = static_cast<int>(a.y);
     int x1 = static_cast<int>(b.x);
@@ -76,14 +76,14 @@ std::string Renderer::render(const Graph& graph, const Layout& layout) const {
     for (auto e : boost::make_iterator_range(boost::edges(g))) {
         Graph::Vertex src = boost::source(e, g);
         Graph::Vertex dst = boost::target(e, g);
-        Position ps = layout.getPosition(src);
-        Position pd = layout.getPosition(dst);
+        Layout::Position ps = layout.getPosition(src);
+        Layout::Position pd = layout.getPosition(dst);
         drawConnector(canvas, ps, pd);
     }
 
     // Draw vertices last to avoid line overwrite.
     for (auto v : boost::make_iterator_range(boost::vertices(g))) {
-        Position p = layout.getPosition(v);
+        Layout::Position p = layout.getPosition(v);
         drawStar(canvas, p, g[v].label);
     }
 

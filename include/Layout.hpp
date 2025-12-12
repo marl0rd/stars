@@ -8,19 +8,20 @@
 
 namespace stars {
 
-struct Position {
-    std::size_t x;
-    std::size_t y;
-};
-
 class Layout {
    public:
+    struct Position {
+        std::size_t x;
+        std::size_t y;
+    };
+
+    Layout() = default;
+
     /// Compute positions for all vertices, stacked vertically by base.
     void compute(const Graph& graph,
                  std::size_t width,
                  std::size_t height,
-                 std::size_t maxConstellations,
-                 const std::string& sortMode);
+                 std::size_t maxConstellations);
 
     /// Get position for a graph::vertex (if present).
     Position getPosition(Graph::Vertex v) const;
