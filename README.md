@@ -9,9 +9,9 @@ Create a constellation of you historical commands and learn from your mistakes i
 ## This project is just starting... Development instructions:
 1. `Install build tools`: cmake, gdb, gcc, conan
 2. `Clone the repo and cd to it`: git clone ....
-3. `Download repo dependencies using conan`: conan install . --output-folder=build --build=missing
+3. `Download repo dependencies`: conan install . --output-folder=build --build=missing --settings=build_type=Debug
 4. `build it`: cmake --build build/build/Release
-5. `Run it`: build/build/Release/stars
+5. `Run it`: build/build/Debug/stars
 
 ## Current summary
 - Each base command (e.g., ls, git) becomes a central star. Let's say "ls"
