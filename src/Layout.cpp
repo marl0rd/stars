@@ -18,9 +18,9 @@ void Layout::compute(const Graph& graph,
     canvasHeight_ = height;
 
     const std::size_t leftMargin = 1;
-    const std::size_t horizStep = 8;         // columns between chain nodes
-    const std::size_t vertStep = 1;          // rows between branches
-    const std::size_t constellationGap = 6;  // rows between constellations
+    const std::size_t horizStep = 20;        // columns between chain nodes
+    const std::size_t vertStep = 7;          // rows between branches
+    const std::size_t constellationGap = 2;  // rows between constellations
     std::size_t currentRow = 10;             // start row for first constellation
 
     auto bases = graph.getBaseVertices();

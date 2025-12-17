@@ -11,9 +11,12 @@
 
 namespace stars {
 
+/// Builds a constellation graph from normalized commands:
+/// - Base commands become central stars.
+/// - Unique flag sets become variant stars attached to the base.
+/// - Specialization chains connect earlier variants to later strict supersets.
 class Graph {
    public:
-
     struct StarVertex {
         std::string label;               ///< Display label, e.g., "<ls -al>".
         std::string base;                ///< Base command (e.g., "ls").
@@ -28,24 +31,50 @@ class Graph {
 
     Graph() = default;
 
+    /// Build the constellation graph from normalized commands.
     void build(const std::vector<Command>& commands);
 
     const BoostGraph& getBoostGraph() const;
-
     std::vector<Vertex> getBaseVertices() const;
-
-    /// Return variant vertices for a base, ordered by (fewer flags first, then earliest time).
     std::vector<Vertex> getVariantsForBase(Vertex baseVertex) const;
 
    private:
+    struct VariantUsage {
+        std::string base;               ///< For each base
+        std::set<std::string> flags;    ///< Collect a unique flag set
+        std::size_t earliestIndex;      ///< Save first time seen
+        std::size_t frequency = 0;      ///< And how often seen
+    };
+
+    struct VariantItem {
+        Vertex vertex;
+        std::size_t firstSeenIndex;
+        std::size_t flagCount;
+    };
+
     BoostGraph graph_;
-    std::unordered_map<std::string, Vertex> baseVertices_;
-    std::unordered_map<std::string, Vertex> variantVertices_;
+    std::unordered_map<std::string, Vertex> baseVertices_;     // base -> vertex
+    std::unordered_map<std::string, Vertex> variantVertices_;  // "base|f1,f2,..." -> vertex
+
+    void clearState();
 
     static std::string makeKey(const std::string& base, const std::set<std::string>& flags);
     static std::string makeLabel(const std::string& base, const std::set<std::string>& flags);
     static bool isStrictSuperset(const std::set<std::string>& a, const std::set<std::string>& b);
-    void clearState();
+
+    static std::vector<std::string> extractBases(const std::vector<Command>& commands);
+
+    std::unordered_map<std::string, VariantUsage> collectVariantUsage(const std::vector<Command>& commands) const;
+
+    void addBaseVertices(const std::vector<std::string>& bases);
+    void addVariantVertices(const std::unordered_map<std::string, VariantUsage>& usageByKey);
+    void addBaseToVariantEdges();
+
+    std::vector<VariantItem> getVariantItemsForBase(const std::string& base) const;
+    void linkSpecializationChainForBase(const std::string& base);
+
+    static bool earlierByTime(const VariantItem& a, const VariantItem& b);
+    static bool fewerFlagsThenEarlier(const VariantItem& a, const VariantItem& b);
 };
 
 }  // namespace stars

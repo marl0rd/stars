@@ -23,44 +23,72 @@ void Renderer::drawStar(std::vector<std::string>& canvas,
     }
 }
 
-/// Draw connector using '-', '/', '\' based on direction.
-/// We step from a to b along a simple Bresenham-like line.
 void Renderer::drawConnector(std::vector<std::string>& canvas,
                              const Layout::Position& a,
                              const Layout::Position& b) {
-    int x0 = static_cast<int>(a.x);
-    int y0 = static_cast<int>(a.y);
-    int x1 = static_cast<int>(b.x);
-    int y1 = static_cast<int>(b.y);
+    // --- Convert positions to integer grid coordinates ---
+    const int x0 = static_cast<int>(a.x);
+    const int y0 = static_cast<int>(a.y);
+    const int x1 = static_cast<int>(b.x);
+    const int y1 = static_cast<int>(b.y);
 
-    int dx = std::abs(x1 - x0);
-    int dy = std::abs(y1 - y0);
-    int sx = (x0 < x1) ? 1 : -1;
-    int sy = (y0 < y1) ? 1 : -1;
-    int err = dx - dy;
+    // --- Compute deltas and the number of steps for DDA ---
+    const int dx = x1 - x0;
+    const int dy = y1 - y0;
+    const int adx = (dx >= 0) ? dx : -dx;
+    const int ady = (dy >= 0) ? dy : -dy;
+    const int steps = (adx > ady) ? adx : ady;
 
-    while (true) {
+    // If both points are the same, nothing to draw (or a single tick if desired).
+    if (steps == 0) {
         if (y0 >= 0 && y0 < static_cast<int>(canvas.size())) {
             auto& row = canvas[y0];
             if (x0 >= 0 && x0 < static_cast<int>(row.size())) {
-                char ch = '-';
-                if (dy != 0) {
-                    ch = (sy > 0) ? '\\' : '/';
+                if (row[x0] == ' ') {
+                    row[x0] = '-';  // minimal mark for a degenerate connector
                 }
-                // Do not overwrite stars if already placed.
-                if (row[x0] == ' ') row[x0] = ch;
             }
         }
-        if (x0 == x1 && y0 == y1) break;
-        int e2 = 2 * err;
-        if (e2 > -dy) {
-            err -= dy;
-            x0 += sx;
+        return;
+    }
+
+    // --- Choose one glyph for the whole connector based on overall direction ---
+    // Horizontal: '-', Vertical: '|', Diagonal down: '\', Diagonal up: '/'
+    char glyph;
+    if (dy == 0) {
+        glyph = '-';
+    } else if (dx == 0) {
+        glyph = '|';
+    } else {
+        glyph = (dy > 0) ? '\\' : '/';
+    }
+
+    // --- DDA increments per step (floating point for clarity) ---
+    const double incX = static_cast<double>(dx) / static_cast<double>(steps);
+    const double incY = static_cast<double>(dy) / static_cast<double>(steps);
+
+    // --- Iterate along the segment and plot only into empty cells ---
+    double xf = static_cast<double>(x0);
+    double yf = static_cast<double>(y0);
+
+    for (int i = 0; i <= steps; ++i) {
+        // Round to nearest integer grid cell.
+        const int xi = static_cast<int>(std::round(xf));
+        const int yi = static_cast<int>(std::round(yf));
+
+        // Bounds check per point.
+        if (yi >= 0 && yi < static_cast<int>(canvas.size())) {
+            auto& row = canvas[yi];
+            if (xi >= 0 && xi < static_cast<int>(row.size())) {
+                // Do not overwrite stars or labels: only draw into empty space.
+                if (row[xi] == ' ') {
+                    row[xi] = glyph;
+                }
+            }
         }
-        if (e2 < dx) {
-            err += dx;
-            y0 += sy;
-        }
+
+        xf += incX;
+        yf += incY;
     }
 }
 

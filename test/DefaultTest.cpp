@@ -4,6 +4,7 @@
 #include <iostream>
 #include <memory>
 #include <string>
+#include <iostream>
 
 #include "Configuration.hpp"
 #include "Graph.hpp"
@@ -15,6 +16,7 @@
 using namespace stars;
 
 TEST(MainTest, RunStars) {
+    std::cout << "************ DEFAULT TEST RUNNING **********" << std::endl;
     auto history = std::make_unique<History>();
     auto graph = std::make_unique<Graph>();
     auto layout = std::make_unique<Layout>();
