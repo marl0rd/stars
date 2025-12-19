@@ -6,7 +6,7 @@ using namespace stars;
 
 std::pair<std::size_t, std::size_t> Terminal::getSize() {
     // TODO: calcular el ancho y algo de la terminal no es facil
-    std::size_t fallbackWidth = 50;
+    std::size_t fallbackWidth = 100;
     std::size_t fallbackHeight = 20;
     return {fallbackWidth, fallbackHeight};
 }

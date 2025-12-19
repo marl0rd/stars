@@ -54,7 +54,7 @@ class Graph {
 
     BoostGraph graph_;
     std::unordered_map<std::string, Vertex> baseVertices_;     // base -> vertex
-    std::unordered_map<std::string, Vertex> variantVertices_;  // "base|f1,f2,..." -> vertex
+    std::unordered_map<std::string, Vertex> variantVertices_;  // "key(base|f1,f2)" -> vertex
 
     void clearState();
 

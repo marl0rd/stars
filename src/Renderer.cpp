@@ -5,10 +5,9 @@
 using namespace stars;
 
 /// Draw a single star '*' and put its label to the right.
-void Renderer::drawStar(std::vector<std::string>& canvas,
-                        const Layout::Position& p,
-                        const std::string& label) {
+void Renderer::drawStar(const Layout::Position& p, const std::string& label) {
     if (p.y >= canvas.size()) return;
+
     auto& row = canvas[p.y];
     if (p.x >= row.size()) return;
 
@@ -23,9 +22,7 @@ void Renderer::drawStar(std::vector<std::string>& canvas,
     }
 }
 
-void Renderer::drawConnector(std::vector<std::string>& canvas,
-                             const Layout::Position& a,
-                             const Layout::Position& b) {
+void Renderer::drawConnector(const Layout::Position& a, const Layout::Position& b) {
     // --- Convert positions to integer grid coordinates ---
     const int x0 = static_cast<int>(a.x);
     const int y0 = static_cast<int>(a.y);
@@ -94,9 +91,12 @@ void Renderer::drawConnector(std::vector<std::string>& canvas,
 
 /// Render graph to ASCII buffer following the layout.
 /// We draw base->variant connectors and specialization chain edges.
-std::string Renderer::render(const Graph& graph, const Layout& layout) const {
+std::string Renderer::render(const Graph& graph, const Layout& layout) {
+    // Prepare blank canvas.
     auto [W, H] = layout.getCanvasSize();
-    std::vector<std::string> canvas(H, std::string(W, ' '));
+    for(std::size_t i = 0; i < H; ++i) {
+        canvas.emplace_back(std::string(W, ' '));
+    }
 
     const auto& g = graph.getBoostGraph();
 
@@ -106,13 +106,13 @@ std::string Renderer::render(const Graph& graph, const Layout& layout) const {
         Graph::Vertex dst = boost::target(e, g);
         Layout::Position ps = layout.getPosition(src);
         Layout::Position pd = layout.getPosition(dst);
-        drawConnector(canvas, ps, pd);
+        drawConnector(ps, pd);
     }
 
     // Draw vertices last to avoid line overwrite.
     for (auto v : boost::make_iterator_range(boost::vertices(g))) {
         Layout::Position p = layout.getPosition(v);
-        drawStar(canvas, p, g[v].label);
+        drawStar(p, g[v].label);
     }
 
     // Join lines.

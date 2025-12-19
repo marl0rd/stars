@@ -18,6 +18,8 @@ void Graph::build(const std::vector<Command>& commands) {
     // For each usageByKey, add variant vertex
     addVariantVertices(usageByKey);
 
+    the problem i see is that all the keys are attached to the base
+    also, the graph should filter the constelations, order the constellation and stuff... not the layout
     // Connect bases to variants
     addBaseToVariantEdges();
 

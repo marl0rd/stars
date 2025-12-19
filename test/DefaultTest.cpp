@@ -21,6 +21,7 @@ TEST(MainTest, RunStars) {
     auto graph = std::make_unique<Graph>();
     auto layout = std::make_unique<Layout>();
     auto renderer = std::make_unique<Renderer>();
+
     auto [termW, termH] = Terminal::getSize();
     auto historyPath = Terminal::getHistoryPath();
     auto testHistoryPath = "resources/.bash_history";
